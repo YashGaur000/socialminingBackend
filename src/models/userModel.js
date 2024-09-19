@@ -1,9 +1,20 @@
-const mongoose = require('mongoose');
+const { getDatabase } = require('../config/db');
 
-const userSchema = new mongoose.Schema({
-  name: String,
-  email: String,
-  password: String,
-});
+async function createUser(userData) {
+  const db = await getDatabase('your-database-name');
+  const collection = db.collection('users');
+  const result = await collection.insertOne(userData);
+  return result;
+}
 
-module.exports = mongoose.model('User', userSchema);
+async function findUserByEmail(email) {
+  const db = await getDatabase('your-database-name');
+  const collection = db.collection('users');
+  const user = await collection.findOne({ email });
+  return user;
+}
+
+module.exports = {
+  createUser,
+  findUserByEmail,
+};
