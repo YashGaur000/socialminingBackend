@@ -1,22 +1,30 @@
-const { MongoClient } = require('mongodb');
+process.env.NODE_OPTIONS = '--tls-min-v1.2';
+const { MongoClient, ServerApiVersion } = require('mongodb');
 require('dotenv').config();
 
-const uri = process.env.MONGODB_URI; // Load MongoDB URI from environment variables
-
-let client;
-
-async function connectDB() {
-  if (!client) {
-    client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-    await client.connect();
-    console.log('MongoDB connected successfully');
+const URI = process.env.MONGODB_URI || "";
+const client = new MongoClient(URI, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    tls: true,                      
+    tlsAllowInvalidCertificates: false, 
+  },
+});
+async function getDatabase(){
+  try {
+    
+   await client.connect();
+   console.log("Pinged your deployment. You successfully connected to MongoDB!");
+   return  client.db("socialmining");
+   
+  } catch (err) {
+    console.error(err);
   }
-  return client;
+
 }
 
-async function getDatabase(dbName) {
-  const client = await connectDB();
-  return client.db(dbName);
-}
+
+
 
 module.exports = { getDatabase };
+

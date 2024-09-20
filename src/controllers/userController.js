@@ -2,7 +2,8 @@ const userModel = require('../models/userModel');
 
 exports.createUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+   
+    const { name, email, password,userId } = req.body;
     const existingUser = await userModel.findUserByEmail(email);
 
     if (existingUser) {
@@ -12,7 +13,8 @@ exports.createUser = async (req, res) => {
     const newUser = {
       name,
       email,
-      password,  // You should hash the password before saving
+      password, 
+      userId // You should hash the password before saving
     };
 
     const result = await userModel.createUser(newUser);
