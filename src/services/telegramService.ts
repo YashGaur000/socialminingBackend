@@ -1,4 +1,4 @@
-import { createUser, findUserByUserId, updateUserStatus } from '../models/userModel';
+import { createUser, findUserByUserId, updateUserStatus, userModelProps } from '../models/userModel';
 
 interface Member {
   id: number;            
@@ -8,22 +8,22 @@ interface Member {
 
 export const handleNewMemberJoin = async (member: Member, chatId: number, bot: any) => {
   console.log('New member details:', member); 
-  const userId = member.id;
+  const userId= (member.id).toString();
   const memberName = member.first_name;
   const memberUsername = member.username || member.first_name || 'Unknown';
 
   try {
-      const existingUser = await findUserByUserId(userId);
+      const existingUser = await findUserByUserId(userId.toString());
 
       if (existingUser) {
           if (existingUser.status === 'left') {
-              await updateUserStatus(userId, 'true'); 
+              await updateUserStatus(userId.toString(), 'true'); 
               bot.sendMessage(chatId, `${memberName} rejoined the group. No points awarded.`);
           } else {
               bot.sendMessage(chatId, `${memberName} is already a member. No points awarded.`);
           }
       } else {
-          const newUser = {
+          const newUser:userModelProps = {
               userId,
               userName: memberUsername,  
               userType: 'telegram',
@@ -54,10 +54,10 @@ export const handleMemberLeave = async (member: Member, chatId: number, bot: any
 
   try {
 
-    const existingUser = await findUserByUserId(userId);
+    const existingUser = await findUserByUserId(userId.toString());
 
     if (existingUser) {
-      await updateUserStatus(userId, 'false'); 
+      await updateUserStatus(userId.toString(), 'false'); 
       bot.sendMessage(chatId, `${memberName} has left the group.`);
     }
   } catch (error) {
