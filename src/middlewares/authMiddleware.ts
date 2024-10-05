@@ -11,9 +11,17 @@ interface JwtPayload {
   userName: string;
 }
 
-interface AuthenticatedRequest extends Request {
-  user?: JwtPayload;
+
+interface User {
+  userId: number;
+  userName: string;
 }
+
+
+interface AuthenticatedRequest extends Request {
+  user?: User; 
+}
+
 
 const authMiddleware = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
   const token = req.cookies?.token || req.header("Authorization")?.replace("Bearer ", "");
@@ -24,9 +32,14 @@ const authMiddleware = (req: AuthenticatedRequest, res: Response, next: NextFunc
   }
 
   try {
+    
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-    req.user = decoded;
-    next();
+   
+    req.user = {
+      userId: parseInt(decoded.userId, 10), 
+      userName: decoded.userName,
+    };
+    next(); 
   } catch (error) {
     res.status(400).json({ message: 'Invalid token' });
   }

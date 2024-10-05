@@ -15,9 +15,27 @@ declare global {
 
 
 declare module 'express-session' {
-    interface SessionData {
+    interface SessionData extends Session {
         state?: string;         
         codeVerifier?: string;
         access_token?:string; 
     }
+}
+
+declare global {
+  namespace Express {
+    interface User extends IUser {
+
+    }
+
+    interface Request {
+      user?: User;
+    }
+  }
+}
+
+declare module 'express-serve-static-core' {
+  interface Request {
+    user?: JwtPayload; 
+  }
 }

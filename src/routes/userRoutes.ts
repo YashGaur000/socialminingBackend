@@ -19,7 +19,7 @@ router.get('/callback', (req: Request, res: Response) => {
 
 // Protected route for user details
 router.get('/user-details', (req: Request, res: Response, next: NextFunction) => {
-  authMiddleware(req, res, next);
+  return authMiddleware(req, res, next);
 }, (req: Request, res: Response) => {
   getUserDetails(req, res);
 });

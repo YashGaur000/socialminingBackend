@@ -33,14 +33,7 @@ export const createUser = async (userData: userModelProps) => {
   }
 };
 
-export const findUserByEmail = async (email: string) => {
-  try {
-    return await UserModel.findOne({ email }).exec();
-  } catch (error) {
-    console.error('Error finding user by email:', error);
-    throw error;
-  }
-};
+
 
 export const findUserByUserId = async (userId: string) => {
   try {
