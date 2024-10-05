@@ -8,9 +8,12 @@ import TelegramBot from 'node-telegram-bot-api';
 import userRoutes from './routes/userRoutes';
 import session, { Cookie } from 'express-session'; 
 import cookieParser from 'cookie-parser'; 
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 7000;
 const botToken = '7455825728:AAEI78YhN9gxh3t3wgSuA2E0f5FRoTL-T-4'; 
 const bot = new TelegramBot(botToken, { polling: true });
 
