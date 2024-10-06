@@ -28,6 +28,7 @@ export const handleTelegramAuth = async (queryParams: any): Promise<ISocialPlatf
         joined: true, 
         joinDate: new Date(),
         pointsEarned: 400,
+        
       });
 
       // Save the new user to the database
