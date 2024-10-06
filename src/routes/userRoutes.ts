@@ -1,8 +1,9 @@
 
 import express, { Request, Response, NextFunction } from 'express';
-import { createUser, getUserDetails } from '../controllers/userController';
+import { ConnectWalletController, createUser, getUserDetails, logout } from '../controllers/userController';
 import { handleCallback } from '../controllers/OuthtwitterController';
 import authMiddleware from '../middlewares/authMiddleware';
+
 
 
 const router = express.Router();
@@ -16,6 +17,9 @@ router.get('/login', (req: Request, res: Response) => {
 router.get('/callback', (req: Request, res: Response) => {
   handleCallback(req, res);
 });
+
+router.post('/connectwallet',ConnectWalletController);
+router.get('/logout',logout);
 
 // Protected route for user details
 router.get('/user-details', (req: Request, res: Response, next: NextFunction) => {

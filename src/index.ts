@@ -10,13 +10,20 @@ import session, { Cookie } from 'express-session';
 import cookieParser from 'cookie-parser'; 
 import dotenv from 'dotenv';
 
+import helmet from 'helmet';
+
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 7000;
 const botToken = '7455825728:AAEI78YhN9gxh3t3wgSuA2E0f5FRoTL-T-4'; 
-const bot = new TelegramBot(botToken, { polling: true });
-
+// const bot = new TelegramBot(botToken, { polling: true });
+app.use(helmet());
+app.use(helmet.hsts({
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+}));
 interface sessionData {
   cookie: Cookie;
 }
@@ -31,11 +38,13 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+console.log(process.env.NODE_ENV as string);
 
 app.use(session({
-  secret: 'efeefffrrre333332',
+  secret: process.env.SESSION_SECRET as string,
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
+ 
 }));
 
 
@@ -47,12 +56,13 @@ app.use('/api/leaderboard', leaderboardRoutes);
 const startServer = async () => {
   try {
     await connectToDatabase(); 
-    await setupBot(bot);       
+    // await setupBot(bot);       
     app.listen(port, () => {
       console.log(`Server is running on port ${port}`);
     });
   } catch (error) {
     console.error('Error starting server:', error);
+    process.exit(1);
   }
 };
 
