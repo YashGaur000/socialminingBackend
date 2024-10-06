@@ -1,6 +1,6 @@
 
 import express, { Request, Response, NextFunction } from 'express';
-import { createUser, getUserDetails } from '../controllers/userController';
+import { createDiscordUserSignIn, createUser, generateReferralCode, getUserDetails } from '../controllers/userController';
 import { handleCallback } from '../controllers/OuthtwitterController';
 import authMiddleware from '../middlewares/authMiddleware';
 
@@ -26,21 +26,14 @@ router.get('/user-details', (req: Request, res: Response, next: NextFunction) =>
 
 
 
+router.post('/connect-discord', authMiddleware, createDiscordUserSignIn);
 
 
-// router.post('/test-create-user', async (req, res) => {
-//   const { userId, userName, userType, points, status } = req.body;
+router.post('/referral', authMiddleware, generateReferralCode);
 
-//   try {
-//     const newUser = await createUser({ userId, userName, userType, points, status });
-//     res.status(201).json({ message: 'User created successfully', user: newUser });
-//   } catch (error) {
-//     if (error instanceof Error) {
-//       res.status(500).json({ message: 'Error creating user', error: error.message });
-//     } else {
-//       res.status(500).json({ message: 'Unknown error occurred' });
-//     }
-//   }
-// });
+
+
+
+
 
 export default router;
