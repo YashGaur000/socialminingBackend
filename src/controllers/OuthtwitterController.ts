@@ -1,13 +1,16 @@
 import { Request, Response } from 'express';
-import { createUser, findUserByUserId, UserModel, userModelProps} from "../models/userModel";
+import { createUser, findUserByUserId, findUserByUserIdAndWalletAddress,} from "../models/userModel";
 import axios from 'axios';
 import jwt from 'jsonwebtoken';
 import querystring from 'querystring';
 import dotenv from 'dotenv';
-import { Cookie } from 'express-session';
-interface sessionData {
-    cookie:Cookie;
+import session, { Cookie } from 'express-session';
+interface SessionData extends session.Session {
+    state?: string;
+    codeVerifier?: string;
+    access_token?: string;
 }
+
 
 dotenv.config();
 
@@ -71,28 +74,26 @@ const handleCallback = async (req: Request, res: Response): Promise<void> => {
             headers: { Authorization: `Bearer ${access_token}` },
         });
 
-        const { id, name, userName } = userResponse.data.data;
+        const { id, name, username } = userResponse.data.data;
         let success = false;
-
+         console.log(userResponse.data.data);
+         const Address=req.session.walletAddress;
         try {
             
             const userId:string = (id);
-            const existingUser = await findUserByUserId(userId);
-       
-            if (existingUser) {
-                console.log('User already exists');
-                success = true;
-            } else {
-                const newUser:userModelProps = {
-                    userId,
-                    status:"join",
-                    userName,
-                    userType: 'twitter',
-                    points: 400,
-                };
-                await createUser(newUser);
-                success = true;
+            const userName:string=username;
+
+            if(Address)
+            {
+
+                res.status(400).json({ error: 'Wallet Address not not found' });
+                return;
             }
+            
+            const existingUser = await findUserByUserIdAndWalletAddress(userId, Address as string,userName );
+         console.log(existingUser);
+         success=true;
+            
         } catch (error) {
             res.status(500).json({ error: 'Server error' });
             return;
@@ -100,16 +101,16 @@ const handleCallback = async (req: Request, res: Response): Promise<void> => {
 
         if (success) {
             
-            const jwtToken = jwt.sign({ userId: id, userName: userName }, JWT_SECRET, {
+            const jwtToken = jwt.sign({ userId: id, userName: username }, JWT_SECRET, {
                 expiresIn: '1h',
             });
 
             res.cookie('token', jwtToken, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                maxAge: 3600000,
+                httpOnly: true, 
+                secure: process.env.NODE_ENV === 'production', 
+                maxAge: 3600000, 
+                sameSite: 'strict', 
             });
-
             res.redirect('http://localhost:5173/success?status=success');
         } else {
             res.redirect('http://localhost:5173/failure');
@@ -128,5 +129,7 @@ const handleCallback = async (req: Request, res: Response): Promise<void> => {
 const protectedRoute = (req: Request, res: Response): void => {
     res.json({ message: 'You have accessed a protected route', user: req.user });
 };
+
+
 
 export { handleCallback, protectedRoute };

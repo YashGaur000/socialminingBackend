@@ -1,4 +1,6 @@
-import { createUser, findUserByUserId, updateUserStatus, userModelProps } from '../models/userModel';
+import SocialPlatform from '../models/SocialPlatformModel';
+import { createUser, findUserByUserId, updateUserStatus } from '../models/userModel';
+import { userModelProps } from '../types/schema';
 
 interface Member {
   id: number;            
@@ -11,27 +13,29 @@ export const handleNewMemberJoin = async (member: Member, chatId: number, bot: a
   const userId= (member.id).toString();
   const memberName = member.first_name;
   const memberUsername = member.username || member.first_name || 'Unknown';
-
+  const userIdentifier=userId;
   try {
-      const existingUser = await findUserByUserId(userId.toString());
+      const existingUser = await SocialPlatform.findOne({ userIdentifier, platform: 'telegram' });
 
       if (existingUser) {
-          if (existingUser.status === 'left') {
+          if (existingUser.joined === false) {
               await updateUserStatus(userId.toString(), 'true'); 
               bot.sendMessage(chatId, `${memberName} rejoined the group. No points awarded.`);
           } else {
               bot.sendMessage(chatId, `${memberName} is already a member. No points awarded.`);
           }
       } else {
-          const newUser:userModelProps = {
-              userId,
-              userName: memberUsername,  
-              userType: 'telegram',
-              points: 500,
-              status: 'join',
-          };
-
-          await createUser(newUser); 
+        const newUser = new SocialPlatform({
+          platform: 'telegram',
+          userIdentifier: userIdentifier, 
+          joined: true, 
+          joinDate: new Date(),
+          pointsEarned: 400,
+        });
+  
+        // Save the new user to the database
+        const createdUser = await newUser.save();
+        return createdUser;
 
           
           const welcomeMessage = memberUsername !== 'Unknown'

@@ -19,6 +19,7 @@ declare module 'express-session' {
         state?: string;         
         codeVerifier?: string;
         access_token?:string; 
+        walletAddress?:string;
     }
 }
 
