@@ -6,7 +6,7 @@ import leaderboardRoutes from './routes/leaderboardRoutes';
 import { setupBot } from './controllers/botController';
 import TelegramBot from 'node-telegram-bot-api';
 import userRoutes from './routes/userRoutes';
-import session, { Cookie } from 'express-session'; 
+import session from 'express-session'; 
 import cookieParser from 'cookie-parser'; 
 import dotenv from 'dotenv';
 
@@ -16,7 +16,7 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 7000;
-const botToken = '7455825728:AAEI78YhN9gxh3t3wgSuA2E0f5FRoTL-T-4'; 
+
 // const bot = new TelegramBot(botToken, { polling: true });
 app.use(helmet());
 app.use(helmet.hsts({
@@ -24,34 +24,36 @@ app.use(helmet.hsts({
     includeSubDomains: true,
     preload: true
 }));
-interface sessionData {
-  cookie: Cookie;
-}
+// interface sessionData {
+//   cookie: Cookie;
+// }
 
+const botToken = process.env.BOT_TOKEN || ''; 
+// const bot = new TelegramBot(botToken, { polling: true });
 
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: process.env.CLIENT_URL || 'http://localhost:5173',
   credentials: true,
 }));
-
 
 app.use(express.json());
 app.use(cookieParser());
 
-console.log(process.env.NODE_ENV as string);
-
 app.use(session({
-  secret: process.env.SESSION_SECRET as string,
+  secret: process.env.SESSION_SECRET || 'default_secret',
   resave: false,
   saveUninitialized: false,
  
 }));
 
-
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 
+app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error(err.stack);
+  res.status(500).send({ message: 'Something went wrong!' });
+});
 
 const startServer = async () => {
   try {
@@ -67,3 +69,13 @@ const startServer = async () => {
 };
 
 startServer();
+
+
+
+
+
+
+
+
+
+

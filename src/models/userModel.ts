@@ -8,6 +8,7 @@ const userSchema = new Schema({
   userName: { type: String },
   userType: { type: String,required:true},
   points: { type: Number, required: true, default: 0 },
+  discordId: { type: String, required: false, unique: true },
   status: { type: String, required: true },
   name:{type:String },
   walletAddress:{type:String},
@@ -29,7 +30,14 @@ export const createUser = async (userData: userModelProps) => {
   }
 };
 
-
+export const findUserByDiscordId = async (discordId: string) => {
+  try {
+    return await UserModel.findOne({ discordId }).exec();
+  } catch (error) {
+    console.error('Error finding user by userId:', error);
+    throw error;
+  }
+};
 
 export const findUserByUserId = async (userId: string) => {
   try {
