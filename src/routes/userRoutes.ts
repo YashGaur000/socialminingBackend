@@ -10,7 +10,7 @@ import authMiddleware from '../middlewares/authMiddleware';
 const router = express.Router();
 
 // Route for login
-router.get('/login', (req: Request, res: Response) => {
+router.post('/login', (req: Request, res: Response) => {
   createUser(req, res);
 });
 

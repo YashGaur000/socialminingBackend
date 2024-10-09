@@ -18,6 +18,7 @@
     "@types/mongodb": "^4.0.7",
     "axios": "^1.7.7",
     "bcrypt": "^5.1.1",
+    "cjs-loader": "^0.1.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
@@ -29,6 +30,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.8.1",
     "mongoose": "^8.7.0",
+    "node-cron": "^3.0.3",
     "node-telegram-bot-api": "^0.66.0",
     "nodemon": "^3.1.7"
   },
@@ -39,6 +41,7 @@
     "@types/express-session": "^1.18.0",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^22.7.4",
+    "@types/node-cron": "^3.0.11",
     "@types/node-telegram-bot-api": "^0.64.7",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",

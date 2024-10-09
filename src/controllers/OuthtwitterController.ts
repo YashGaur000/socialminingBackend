@@ -5,11 +5,7 @@ import jwt from 'jsonwebtoken';
 import querystring from 'querystring';
 import dotenv from 'dotenv';
 import session, { Cookie } from 'express-session';
-interface SessionData extends session.Session {
-    state?: string;
-    codeVerifier?: string;
-    access_token?: string;
-}
+import cookieParser from 'cookie-parser';
 
 
 dotenv.config();
@@ -30,7 +26,10 @@ function generateBasicAuthHeader(clientId: string, clientSecret: string): string
 const handleCallback = async (req: Request, res: Response): Promise<void> => {
     const authorizationCode = req.query.code as string | undefined;
     const stateReceived = req.query.state as string | undefined;
-
+    console.log(stateReceived);
+    
+    
+    
     if (stateReceived !== req.session.state) {
         res.status(400).send('State mismatch or CSRF attack detected');
         return;
@@ -41,6 +40,7 @@ const handleCallback = async (req: Request, res: Response): Promise<void> => {
         return;
     }
 
+     const Address=req.session.WalletAddress;
     let codeVerifier = req.session.codeVerifier  ;
 
     if (!codeVerifier) {
@@ -49,10 +49,14 @@ const handleCallback = async (req: Request, res: Response): Promise<void> => {
         return;
     }
 
+
+   
     const headers = {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Authorization': generateBasicAuthHeader(CLIENT_ID, CLIENT_SECRET),
     };
+   
+    
 
     const body = querystring.stringify({
         grant_type: 'authorization_code',
@@ -69,7 +73,8 @@ const handleCallback = async (req: Request, res: Response): Promise<void> => {
         const { access_token } = tokenResponse.data;
 
         req.session.access_token = access_token;
-
+       
+        
         const userResponse = await axios.get(USER_DETAILS_URL, {
             headers: { Authorization: `Bearer ${access_token}` },
         });
@@ -77,18 +82,19 @@ const handleCallback = async (req: Request, res: Response): Promise<void> => {
         const { id, name, username } = userResponse.data.data;
         let success = false;
          console.log(userResponse.data.data);
-         const Address=req.session.walletAddress;
+    
+          console.log(req.cookies);
+             
+        
+       
+
         try {
             
             const userId:string = (id);
             const userName:string=username;
-
-            if(Address)
-            {
-
-                res.status(400).json({ error: 'Wallet Address not not found' });
-                return;
-            }
+                
+          
+          
             
             const existingUser = await findUserByUserIdAndWalletAddress(userId, Address as string,userName );
          console.log(existingUser);

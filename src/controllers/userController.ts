@@ -4,22 +4,37 @@ import { findUserByUserId, findWalletAddress, UserModel } from '../models/userMo
 import { randomBytes } from 'crypto';
 import dotenv from 'dotenv';
 import { generateCodeChallenge, generateCodeVerifier, generateRandomState } from '../utils/OuthVerifier';
+import jwt from 'jsonwebtoken';
+import querystring from 'querystring';
 
-import { isAddress} from 'ethers';
-import session from 'express-session';
+import { isAddress, Wallet} from 'ethers';
+
+
+
 
 dotenv.config();
 const SECRET_KEY=process.env.JWT_SECRET as string;
 console.log(SECRET_KEY);
-dotenv.config();
+ 
 
 const CLIENT_ID = process.env.CLIENT_ID as string;
 const CLIENT_SECRET = process.env.CLIENT_SECRET as string;
 const REDIRECT_URI = process.env.REDIRECT_URI as string;
 const AUTHORIZATION_URL = process.env.AUTHORIZATION_URL as string;
 
+
+export const generatejwtToken = (address: string): string => {
+  const wallettoken: string = jwt.sign({ address }, SECRET_KEY, { expiresIn: '5m' });
+  return wallettoken;
+};
+
+
 export const createUser = async (req: Request, res: Response): Promise<void> => {
   try {
+
+     const {Address}=req.body;
+      console.log(Address);
+      
     const codeVerifier = generateCodeVerifier();
     const codeChallenge = generateCodeChallenge(codeVerifier);
 
@@ -27,11 +42,13 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
     req.session.codeVerifier = codeVerifier;
     const state = generateRandomState();
     req.session.state = state;
+    req.session.WalletAddress=Address;
 
-    const authorizationUrl = `${AUTHORIZATION_URL}?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=tweet.read%20tweet.write%20users.read&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
+    
+;    const authorizationUrl = `${AUTHORIZATION_URL}?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=tweet.read%20tweet.write%20users.read&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
 
-     res.redirect(authorizationUrl);
-   // res.json({ authorizationUrl });
+    //  res.redirect(authorizationUrl);
+   res.json({ authorizationUrl });
   } catch (error) {
     console.error('Error generating authorization URL:', error);
     res.status(500).json({ error: 'Failed to generate Twitter login URL' });
@@ -45,8 +62,10 @@ export const getUserDetails = async (req: Request, res: Response): Promise<void>
       return;
     }
 
+      
     const user = await findUserByUserId(req.user.userId.toString());
 
+ 
     if (!user) {
       res.status(404).json({ message: 'User not found' });
       return;
@@ -89,28 +108,29 @@ export const ConnectWalletController = async(req: Request, res: Response) => {
   try {
     const { address } = req.body;
 
- 
-
-   
+       
+     
+    
     const isValid = isAddress(address);
-
+          
+    
 
     if (!isValid) {
        res.status(400).json({ message: 'Invalid wallet address' });
     }
 
-    
+    const Address:string=address.toString();
    
-      const user = await findWalletAddress(address);;
- 
+      const user = await findWalletAddress(Address);;
+  
    
     if (!user) {
      const newuser = new UserModel({
-        userId: "",
-        userName: '', 
+        userId: `${Date.now()}`,
+        userName: `Guest${Date.now()}`, 
         userType: 'wallet', 
-        status: 'active',
-        name: '',
+       
+       
         walletAddress: address,
       });
       await newuser.save();
@@ -119,7 +139,7 @@ export const ConnectWalletController = async(req: Request, res: Response) => {
       console.log('User already exists:', user);
     }
 
-    req.session.walletAddress = address;
+  
     
 
 
@@ -263,4 +283,5 @@ interface DiscordTokenResponse {
       console.error('Error generating referral code:', error);
       res.status(500).json({ error: 'Failed to generate referral code' });
     }
+  
   };
