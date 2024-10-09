@@ -11,13 +11,14 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 
 import helmet from 'helmet';
+import { scheduleLeaderboardUpdate } from './services/Scheduler';
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 7000;
-
-// const bot = new TelegramBot(botToken, { polling: true });
+const botToken = process.env.BOT_TOKEN || ''; 
+const bot = new TelegramBot(botToken, { polling: true });
 app.use(helmet());
 app.use(helmet.hsts({
     maxAge: 31536000,
@@ -28,8 +29,8 @@ app.use(helmet.hsts({
 //   cookie: Cookie;
 // }
 
-const botToken = process.env.BOT_TOKEN || ''; 
-// const bot = new TelegramBot(botToken, { polling: true });
+
+
 
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:5173',
@@ -54,11 +55,11 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   console.error(err.stack);
   res.status(500).send({ message: 'Something went wrong!' });
 });
-
+scheduleLeaderboardUpdate();
 const startServer = async () => {
   try {
     await connectToDatabase(); 
-    // await setupBot(bot);       
+    await setupBot(bot);       
     app.listen(port, () => {
       console.log(`Server is running on port ${port}`);
     });

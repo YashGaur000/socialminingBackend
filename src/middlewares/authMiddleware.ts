@@ -9,12 +9,14 @@ const JWT_SECRET = process.env.JWT_SECRET as string;
 interface JwtPayload {
   userId: string;
   userName: string;
+  Address:string;
 }
 
 
 interface User {
   userId: number;
   userName: string;
+  Address:string;
 }
 
 
@@ -38,7 +40,10 @@ const authMiddleware = (req: AuthenticatedRequest, res: Response, next: NextFunc
     req.user = {
       userId: parseInt(decoded.userId, 10), 
       userName: decoded.userName,
+      Address:decoded.Address,
+      
     };
+    
     next(); 
   } catch (error) {
     res.status(400).json({ message: 'Invalid token' });

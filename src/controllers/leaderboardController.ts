@@ -1,30 +1,62 @@
 import { Request, Response } from 'express';
 import { UserModel } from '../models/userModel';
+import { LeaderboardModel } from '../models/LeaderBoardModel';
 
-export const getLeaderboardController = async (req: Request, res: Response) => {
+
+
+
+
+
+
+export const updateLeaderboard = async () => {
   try {
-    const leaderboard = await  UserModel.aggregate([
+    const users = await UserModel.aggregate([
       {
         $project: {
-          walletAddress: 1,
-          twitterHandle: 1,
-          userName: 1,
-          totalPoints: {
+          userId: '$_id',
+          userName: '$userName',
+          points: {
             $add: [
-              "$points", 
-              { $sum: "$socialPlatforms.pointsEarned" },
-              { $sum: "$tasksCompleted.completed ? 10 : 0" }
+              '$points',
+              { $sum: '$socialPlatforms.pointsEarned' },
+              { $multiply: ['$totalTasksCompleted', 10] }
             ]
           }
         }
       },
-      {
-        $sort: { totalPoints: -1 } 
-      },
-     
+      { $sort: { points: -1 } }
     ]);
 
- 
+   
+    const SortedData = users.map((user, index) => ({
+      updateOne: {
+        filter: { userId: user.userId },
+        update: {
+          $set: {
+            rank: index + 1,
+            points: user.points,
+            userName: user.userName 
+          }
+        },
+        upsert: true
+      }
+    }));
+
+    await LeaderboardModel.bulkWrite(SortedData);
+
+    console.log('Leaderboard updated successfully');
+  } catch (error) {
+    console.error('Error updating leaderboard:', error);
+  }
+};
+
+export const getLeaderboardController = async (req: Request, res: Response) => {
+  try {
+    const leaderboard = await LeaderboardModel.find()
+      .sort({ rank: 1 })
+      .limit(100)
+      .populate('userId', 'userName walletAddress');
+
     res.status(200).json({
       success: true,
       data: leaderboard,

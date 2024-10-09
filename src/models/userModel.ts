@@ -1,24 +1,59 @@
 import { Schema, model } from 'mongoose';
 import { userModelProps } from '../types/schema';
+import { error } from 'console';
 
 
 const userSchema = new Schema({
+  userId: { 
+    type: String, 
+    unique: [true, 'userId must be unique'], 
+    required: [true, 'userId is required']   
+  },
+  userName: { 
+    type: String, 
+    unique: [true, 'userName must be unique'], 
+  },
+  userType: { 
+    type: String 
+  },
+  points: { 
+    type: Number, 
+    required: [true, 'points are required'],  
+    default: 0 
+  },
+  
+  walletAddress: { 
+    type: String 
+  },
+  socialPlatforms: [{ 
+    type: Schema.Types.ObjectId, 
+    ref: 'SocialPlatform' 
+  }],
+  totalTasksCompleted: 
+  { 
+    type: Number, 
+    default: 0 
+  },
 
-  userId: { type: String, unique: true },
-  userName: { type: String },
-  userType: { type: String,required:true},
-  points: { type: Number, required: true, default: 0 },
-  discordId: { type: String, required: false, unique: true },
-  status: { type: String, required: true },
-  name:{type:String },
-  walletAddress:{type:String},
-  socialPlatforms: [{ type: Schema.Types.ObjectId, ref: 'SocialPlatform' }],
-  tasksCompleted: [{ type: Schema.Types.ObjectId, ref: 'Task' }],
+  referredBy: {
+     type: Schema.Types.ObjectId, ref: 'Referral', 
+     default: null
+    
+    },
+    referral: { type: Schema.Types.ObjectId, ref: 'User' },
 }, {
-  timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
+  timestamps: { 
+    createdAt: 'created_at', 
+    updatedAt: 'updated_at' 
+  }
 });
 
-export const UserModel = model('User', userSchema);
+export const UserModel= model<userModelProps> ('User', userSchema);
+
+
+
+
+//write Customize function-------------------------------------------------
 
 export const createUser = async (userData: userModelProps) => {
   try {
@@ -48,47 +83,83 @@ export const findUserByUserId = async (userId: string) => {
   }
 };
 
-export const updateUserStatus = async (userId: string, status: string) => {
+export const updateUserStatus = async (userId: string, joined: boolean) => {
   try {
-    return await UserModel.updateOne({ userId }, { $set: { status } }).exec();
+    console.log(joined);
+    console.log(userId);
+    
+    return await UserModel.updateOne({ userId }, { $set: { joined} }).exec();
+
   } catch (error) {
     console.error('Error updating user status:', error);
     throw error;
   }
 };
 
-export const findUserByUserIdAndWalletAddress = async (userId: string, walletAddress: string,userName:string) => {
+
+
+export const findUserByUserIdAndWalletAddress = async (userId: string, walletAddress: string, userName: string) => {
   try {
-    // Find the user by wallet address
-   
     
-    let user = await UserModel.findOne({ walletAddress }).exec();
+    const existingUser = await UserModel.findOne({
+      $or: [
+        { userId },
+        { userName },
+        { walletAddress: { $ne: '', $eq: walletAddress } }
+      ]
+    }).exec();
+  console.log("exist",existingUser);
+  
+    if (existingUser) {
      
-    
-    if (user) {
-      if (!user.userId) { 
-        user.userId = userId;
-        user.userName=userName;
-        user.points=400;
+
+      if (existingUser.userName.startsWith('Guest') && userName && !userName.startsWith('Guest')) {
+        existingUser.userName = userName;
         
-        await user.save(); 
-     
+        await existingUser.save();
       }
-    } 
-   
-    
-    return user;
+
+      if (!existingUser.walletAddress && walletAddress) {
+        existingUser.walletAddress = walletAddress;
+        existingUser.userType = 'wallet';
+        await existingUser.save();
+      }
+
+      return existingUser;
+
+     
+    } else {
+ 
+      const newUser = new UserModel({
+        userId,
+        userName,
+        walletAddress,
+        points: 0,
+      
+        userType: walletAddress ? 'wallet' : 'twitter',
+      });
+
+      await newUser.save();
+      return newUser;
+    }
   } catch (error) {
-    console.error('Error finding or updating user:', error);
+    console.error('Error finding or creating user:', error);
     throw error;
   }
 };
 
 
 
-export const findWalletAddress = async (walletAddress:string) => {
+
+export const findWalletAddress = async (
+  walletAddress:string) => {
+  console.log(walletAddress);
+  
   try {
-    return await UserModel.findOne({ walletAddress }).exec();
+    const users= await UserModel.findOne({ walletAddress }).exec();
+    console.log(users);
+    
+   return users;
   } catch (error) {
     console.error('Error finding user by userId:', error);
     throw error;

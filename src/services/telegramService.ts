@@ -1,4 +1,4 @@
-import SocialPlatform from '../models/SocialPlatformModel';
+import SocialPlatform, { updateTwitterStatus } from '../models/SocialPlatformModel';
 import { createUser, findUserByUserId, updateUserStatus } from '../models/userModel';
 import { userModelProps } from '../types/schema';
 
@@ -9,17 +9,20 @@ interface Member {
 }
 
 export const handleNewMemberJoin = async (member: Member, chatId: number, bot: any) => {
+
   console.log('New member details:', member); 
+
   const userId= (member.id).toString();
   const memberName = member.first_name;
   const memberUsername = member.username || member.first_name || 'Unknown';
   const userIdentifier=userId;
   try {
       const existingUser = await SocialPlatform.findOne({ userIdentifier, platform: 'telegram' });
-
+      console.log(existingUser);
+      
       if (existingUser) {
           if (existingUser.joined === false) {
-              await updateUserStatus(userId.toString(), 'true'); 
+              await updateTwitterStatus(userId.toString(), true,400); 
               bot.sendMessage(chatId, `${memberName} rejoined the group. No points awarded.`);
           } else {
               bot.sendMessage(chatId, `${memberName} is already a member. No points awarded.`);
@@ -35,6 +38,8 @@ export const handleNewMemberJoin = async (member: Member, chatId: number, bot: a
   
         // Save the new user to the database
         const createdUser = await newUser.save();
+        console.log("created user" ,createUser);
+        
         return createdUser;
 
           
@@ -58,10 +63,14 @@ export const handleMemberLeave = async (member: Member, chatId: number, bot: any
 
   try {
 
-    const existingUser = await findUserByUserId(userId.toString());
-
+    const existingUser =  await SocialPlatform.findOne({ userIdentifier:userId, platform: 'telegram' });
+    console.log(existingUser);
+    
     if (existingUser) {
-      await updateUserStatus(userId.toString(), 'false'); 
+      // await updateUserStatus(userId.toString(), false); 
+      console.log("leftstatus" ,userId);
+      
+      await updateTwitterStatus(userId.toString(),false,0);
       bot.sendMessage(chatId, `${memberName} has left the group.`);
     }
   } catch (error) {

@@ -4,13 +4,27 @@ import { ITask } from '../types/schema';
 
 
 
-const taskSchema = new Schema<ITask>({
-  taskName: { type: String, required: true },
-  completed: { type: Boolean, default: false },
-  completedDate: { type: Date }
+const TaskSchema = new Schema({
+  taskId: { 
+    type: String, 
+    required: [true, 'Task ID is required'],
+    unique: true
+  },
+  taskName: { 
+    type: String, 
+    required: [true, 'Task name is required']
+  },
+  platform: { 
+    type: String, 
+    enum: {
+      values: ['twitter', 'reddit', 'telegram', 'discord'],
+      message: '{VALUE} is not a supported platform for tasks'
+    },
+    required: [true, 'Platform for the task is required']
+  }
 });
 
-const Task = model<ITask>('Task', taskSchema);
+const Task = model<ITask>('Task', TaskSchema);
 export default Task;
 
 
