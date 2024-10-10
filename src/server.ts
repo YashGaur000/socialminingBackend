@@ -18,7 +18,7 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 7000;
 const botToken = process.env.BOT_TOKEN || ''; 
-const bot = new TelegramBot(botToken, { polling: true });
+// const bot = new TelegramBot(botToken, { polling: true });
 app.use(helmet());
 app.use(helmet.hsts({
     maxAge: 31536000,
@@ -33,7 +33,7 @@ app.use(helmet.hsts({
 
 
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: process.env.CLIENT_URL || 'http://localhost:5174',
   credentials: true,
 }));
 
@@ -59,7 +59,7 @@ scheduleLeaderboardUpdate();
 const startServer = async () => {
   try {
     await connectToDatabase(); 
-    await setupBot(bot);       
+    // await setupBot(bot);       
     app.listen(port, () => {
       console.log(`Server is running on port ${port}`);
     });

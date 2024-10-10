@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import { findUserByUserId, findWalletAddress, UserModel } from '../models/userModel';
-
 import { randomBytes } from 'crypto';
 import dotenv from 'dotenv';
 import { generateCodeChallenge, generateCodeVerifier, generateRandomState } from '../utils/OuthVerifier';
@@ -8,6 +7,8 @@ import jwt from 'jsonwebtoken';
 import querystring from 'querystring';
 
 import { isAddress, Wallet} from 'ethers';
+import { request } from 'undici';
+import axios from 'axios';
 
 
 
@@ -187,6 +188,7 @@ interface DiscordTokenResponse {
   
   export const createDiscordUserSignIn = async (req: Request, res: Response): Promise<void> => {
     const { code } = req.body;
+    console.log("heres code",code);
   
     if (!code) {
       res.status(400).json({ error: 'Code is required' });
@@ -195,11 +197,11 @@ interface DiscordTokenResponse {
   
     try {
       // Fetch token data from Discord
-      const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
+      const tokenResponse = await axios('https://discord.com/api/oauth2/token', {
         method: 'POST',
-        body: new URLSearchParams({
-          client_id: process.env.CLIENT_ID as string,
-          client_secret: process.env.CLIENT_SECRET as string,
+        data: new URLSearchParams({
+          client_id: process.env.CLIENT_ID_DISCORD as string,
+          client_secret: process.env.CLIENT_SECRET_DISCORD as string,
           code,
           grant_type: 'authorization_code',
           redirect_uri: `http://localhost:${process.env.FRONTEND_PORT}`,
@@ -209,26 +211,32 @@ interface DiscordTokenResponse {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       });
+      console.log("heres tokenresponse",tokenResponse);
+
+      const { status, data } = tokenResponse;
   
-      if (!tokenResponse.ok) {
+      if ( status !== 200 ) {
         throw new Error(`Failed to fetch token: ${tokenResponse.statusText}`);
       }
-  
-      const oauthData: DiscordTokenResponse = await tokenResponse.json();
+      
+      const oauthData =await data.json() as DiscordTokenResponse ;
       console.log('---------------oauthData------------------', oauthData);
+      
   
       // Fetch user data from Discord
-      const userResponse= await fetch('https://discord.com/api/users/@me', {
+      const userResponse= await axios('https://discord.com/api/users/@me', {
         headers: {
           authorization: `${oauthData.token_type} ${oauthData.access_token}`,
         },
       });
   
-      if (!userResponse.ok) {
-        throw new Error(`Failed to fetch user data: ${userResponse.statusText}`);
+
+      if (status !== 200) {
+        throw new Error(`Failed to fetch user data: ${tokenResponse.statusText}`);
       }
   
-      const userResultData: DiscordUserResponse = await userResponse.json();
+      const userResultData = await userResponse.data.json() as DiscordUserResponse;
+
       console.log('--------------userResultData---------------------', userResultData);
   
       // Prepare Discord user data for storage
