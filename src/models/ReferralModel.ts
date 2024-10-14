@@ -9,6 +9,7 @@ const referralSchema = new Schema<IReferral>({
   totalReferred: { type: Number, default: 0 },
   totalPointsEarned: { type: Number, default: 0 }, 
   createdAt: { type: Date, default: Date.now },
+ 
 });
 
 const Referral = model<IReferral>('Referral', referralSchema);

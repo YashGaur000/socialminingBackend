@@ -4,9 +4,11 @@ import { Document, Types } from 'mongoose';
 export interface ISocialPlatform {
   platform: 'twitter' | 'reddit' | 'telegram' | 'discord';
   userIdentifier: string;
+  platformUserName:string;
   joined: boolean;
   joinDate?: Date;
   pointsEarned: number;
+  invite?: string;
 }
 
 

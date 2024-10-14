@@ -1,10 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import { connectToDatabase } from './config/dbconfig';
-import authRoutes from './routes/authRoutes';
+
 import leaderboardRoutes from './routes/leaderboardRoutes';
-import { setupBot } from './controllers/botController';
-import TelegramBot from 'node-telegram-bot-api';
+
+
 import userRoutes from './routes/userRoutes';
 import session from 'express-session'; 
 import cookieParser from 'cookie-parser'; 
@@ -12,13 +12,14 @@ import dotenv from 'dotenv';
 
 import helmet from 'helmet';
 import { scheduleLeaderboardUpdate } from './services/Scheduler';
+import {  generateTelegramLink, handleTelegramWebhook} from './controllers/telegramController';
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 7000;
 const botToken = process.env.BOT_TOKEN || ''; 
-const bot = new TelegramBot(botToken, { polling: true });
+
 app.use(helmet());
 app.use(helmet.hsts({
     maxAge: 31536000,
@@ -47,7 +48,7 @@ app.use(session({
  
 }));
 
-app.use('/api/auth', authRoutes);
+
 app.use('/api/users', userRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 
@@ -56,10 +57,23 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   res.status(500).send({ message: 'Something went wrong!' });
 });
 scheduleLeaderboardUpdate();
+
+app.post('/generate-telegram-link', generateTelegramLink);
+
+// Telegram webhook handler
+// app.get('/setWebhook',handleWebHookSet);
+app.post('/webhook', handleTelegramWebhook);
+
+// app.post('/webhook', (req, res) => {
+//   console.log('Webhook payload received:', req.body);
+//   res.status(200).send('Webhook received');
+// });
+
+
 const startServer = async () => {
   try {
     await connectToDatabase(); 
-    await setupBot(bot);       
+       
     app.listen(port, () => {
       console.log(`Server is running on port ${port}`);
     });
