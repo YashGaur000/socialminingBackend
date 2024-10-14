@@ -6,6 +6,7 @@ import querystring from 'querystring';
 import dotenv from 'dotenv';
 import session, { Cookie } from 'express-session';
 import cookieParser from 'cookie-parser';
+import { findOrCreateSocialPlatform } from '../models/SocialPlatformModel';
 
 
 dotenv.config();
@@ -87,16 +88,21 @@ const handleCallback = async (req: Request, res: Response): Promise<void> => {
 
         try {
             
-            const userId:string = (id);
+            const userId:string = Date.now().toString();
             const userName:string=username;
                 
+             
           
           
-            
+            await findOrCreateSocialPlatform("twitter",userId,userName)
             const existingUser = await findUserByUserIdAndWalletAddress(userId, Address as string,userName );
+           
          console.log(existingUser);
+
+         
          success=true;
             
+         
         } catch (error) {
             res.status(500).json({ error: 'Server error' });
             return;

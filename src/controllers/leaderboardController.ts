@@ -27,7 +27,7 @@ export const updateLeaderboard = async () => {
       { $sort: { points: -1 } }
     ]);
 
-   
+    
     const SortedData = users.map((user, index) => ({
       updateOne: {
         filter: { userId: user.userId },
@@ -43,6 +43,15 @@ export const updateLeaderboard = async () => {
     }));
 
     await LeaderboardModel.bulkWrite(SortedData);
+
+    const userUpdates = users.map(user => ({
+      updateOne: {
+        filter: { userId: user.userId },
+        update: { $set: { points: user.points } }
+      }
+    }));
+
+    await UserModel.bulkWrite(userUpdates);
 
     console.log('Leaderboard updated successfully');
   } catch (error) {

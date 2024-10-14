@@ -46,7 +46,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
     req.session.WalletAddress=Address;
 
     
-;    const authorizationUrl = `${AUTHORIZATION_URL}?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=tweet.read%20tweet.write%20users.read&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
+    const authorizationUrl = `${AUTHORIZATION_URL}?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=tweet.read%20tweet.write%20users.read&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
 
     //  res.redirect(authorizationUrl);
    res.json({ authorizationUrl });
