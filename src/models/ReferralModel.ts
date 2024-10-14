@@ -4,7 +4,7 @@ import { IReferral } from '../types/schema';
 
 const referralSchema = new Schema<IReferral>({
   userId: { type: String, required: true }, 
-  referralCode: { type: String, required: true, unique: true }, 
+  referralCode: { type: String, required: true }, 
   referredUsers: [{ type: String }], 
   totalReferred: { type: Number, default: 0 },
   totalPointsEarned: { type: Number, default: 0 }, 

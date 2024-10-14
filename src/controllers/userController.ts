@@ -8,6 +8,7 @@ import querystring from 'querystring';
 
 import { isAddress, Wallet} from 'ethers';
 import axios from 'axios';
+import { createReferralForUser } from './referralController';
 
 
 
@@ -105,10 +106,12 @@ export const logout = (req: Request, res: Response): void => {
 
 
 export const ConnectWalletController = async(req: Request, res: Response) => {
+
+  let userId: string;
+  let referralLink: string;
+
   try {
-    const { address } = req.body;
-    const {userId}=req.body;
-       
+    const { address, referralCode } = req.body;
      
     
     const isValid = isAddress(address);
@@ -135,16 +138,21 @@ export const ConnectWalletController = async(req: Request, res: Response) => {
       });
       await newuser.save();
       console.log('New user created:', newuser);
+      userId = newuser.userId;
     } else {
       console.log('User already exists:', user);
+      userId = user.userId;
     }
 
-  
-    
 
+    const referralResponse = await createReferralForUser(userId);
+    console.log("referral Response",referralResponse);
+    referralLink = referralResponse.referralLink;
 
-
-     res.status(200).json({ message: 'Wallet connected successfully' });
+    res.status(200).json({ message: 'Wallet connected successfully',
+      userId,
+      referralLink,
+     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });

@@ -134,8 +134,8 @@ export const findUserByUserIdAndWalletAddress = async (userId: string, walletAdd
         userId,
         userName,
         walletAddress,
-        points: 400,
-      
+        points: 0,
+         
         userType: walletAddress ? 'wallet' : 'twitter',
       });
 
@@ -147,8 +147,6 @@ export const findUserByUserIdAndWalletAddress = async (userId: string, walletAdd
     throw error;
   }
 };
-
-
 
 
 export const findWalletAddress = async (
