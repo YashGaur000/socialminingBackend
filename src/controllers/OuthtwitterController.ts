@@ -84,9 +84,6 @@ const handleCallback = async (req: Request, res: Response): Promise<void> => {
          console.log(userResponse.data.data);
     
           console.log(req.cookies);
-             
-        
-       
 
         try {
             
