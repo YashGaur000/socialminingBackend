@@ -31,7 +31,7 @@ router.get('/user-details', (req: Request, res: Response, next: NextFunction) =>
 
 
 
-router.post('/connect-discord', authMiddleware, createDiscordUserSignIn);
+router.post('/connect-discord', createDiscordUserSignIn);
 
 
 router.post('/referral', authMiddleware, generateReferralCode);
