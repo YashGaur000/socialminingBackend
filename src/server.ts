@@ -33,7 +33,7 @@ app.use(helmet.hsts({
 
 
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5174',
+  origin: 'http://localhost:5174',
   credentials: true,
 }));
 
@@ -51,10 +51,10 @@ app.use(session({
 app.use('/api/users', userRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
-  res.status(500).send({ message: 'Something went wrong!' });
-});
+// app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+//   console.error(err.stack);
+//   res.status(500).send({ message: 'Something went wrong!' });
+// });
 scheduleLeaderboardUpdate();
 
 app.post('/generate-telegram-link', generateTelegramLink);
