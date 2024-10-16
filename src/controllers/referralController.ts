@@ -25,3 +25,28 @@ export const createReferralForUser = async(userId: string) => {
     throw new Error('Unable to create referral');
   }
 };
+
+export const checkReferrer = async(referralCode: string,userId: string) => {
+  try{
+    const referral = await Referral.findOne({referralCode: referralCode}).populate('userId');
+
+
+
+    if(!referral.referredUsers.includes(userId)){
+
+      referral.referredUsers.push(userId);
+
+      await referral.save();
+
+      // console.log(" userid of referrrer", newUserId)
+      // console.log(" referred user data added to referral", newUserId)
+    }else{
+      console.log("User already referred")
+    }
+  }
+  catch(error){
+    throw new Error(error)
+
+    console.log(error)
+  }
+}

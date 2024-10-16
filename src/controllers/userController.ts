@@ -8,7 +8,7 @@ import querystring from 'querystring';
 
 import { isAddress, Wallet} from 'ethers';
 import axios from 'axios';
-import { createReferralForUser } from './referralController';
+import { checkReferrer, createReferralForUser } from './referralController';
 
 
 
@@ -113,6 +113,7 @@ export const ConnectWalletController = async(req: Request, res: Response) => {
   try {
     const { address, referralCode,userid } = req.body;
      
+   
     
     const isValid = isAddress(address);
           
@@ -122,7 +123,7 @@ export const ConnectWalletController = async(req: Request, res: Response) => {
        res.status(400).json({ message: 'Invalid wallet address' });
     }
 
-    const Address:string=address.toString();
+    const Address:string=address;
    
       const user = await findWalletAddress(Address);;
   
@@ -132,11 +133,16 @@ export const ConnectWalletController = async(req: Request, res: Response) => {
         userId: `${Date.now()}`,
         userName: `Guest${Date.now()}`, 
         userType: 'wallet', 
-        
-       
+      
         walletAddress: address,
       });
       await newuser.save();
+
+      if(referralCode){
+        const referral = await checkReferrer(referralCode, newuser.userId)
+        console.log("referral here",referral);
+      }
+
       console.log('New user created:', newuser);
       userId = newuser.userId;
     } else {
