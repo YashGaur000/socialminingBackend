@@ -111,7 +111,7 @@ export const ConnectWalletController = async(req: Request, res: Response) => {
   let referralLink: string;
 
   try {
-    const { address, referralCode } = req.body;
+    const { address, referralCode,userid } = req.body;
      
     
     const isValid = isAddress(address);
@@ -132,7 +132,7 @@ export const ConnectWalletController = async(req: Request, res: Response) => {
         userId: `${Date.now()}`,
         userName: `Guest${Date.now()}`, 
         userType: 'wallet', 
-       
+        
        
         walletAddress: address,
       });

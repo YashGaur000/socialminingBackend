@@ -7,7 +7,7 @@ const socialPlatformSchema = new Schema<ISocialPlatform>({
     platformUserName:{type:String},
     joined: { type: Boolean, default: false },
     joinDate: { type: Date },
-    invite:{type:String,unique: true},
+  
     pointsEarned: { type: Number, default: 0 }
   });
   
@@ -56,3 +56,6 @@ const socialPlatformSchema = new Schema<ISocialPlatform>({
       throw error;
     }
   };
+
+
+  

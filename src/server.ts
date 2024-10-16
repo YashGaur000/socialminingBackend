@@ -51,22 +51,17 @@ app.use(session({
 app.use('/api/users', userRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
-  res.status(500).send({ message: 'Something went wrong!' });
-});
+// app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+//   console.error(err.stack);
+//   res.status(500).send({ message: 'Something went wrong!' });
+// });
 scheduleLeaderboardUpdate();
 
 app.post('/generate-telegram-link', generateTelegramLink);
 
-// Telegram webhook handler
-// app.get('/setWebhook',handleWebHookSet);
+
 app.post('/webhook', handleTelegramWebhook);
 
-// app.post('/webhook', (req, res) => {
-//   console.log('Webhook payload received:', req.body);
-//   res.status(200).send('Webhook received');
-// });
 
 
 const startServer = async () => {

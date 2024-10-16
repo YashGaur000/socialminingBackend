@@ -151,7 +151,7 @@ export const findUserByUserIdAndWalletAddress = async (userId: string, walletAdd
 
 export const findWalletAddress = async (
   walletAddress:string) => {
-  console.log(walletAddress);
+ 
   
   try {
     const users= await UserModel.findOne({ walletAddress }).exec();
