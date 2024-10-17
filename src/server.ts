@@ -33,7 +33,7 @@ app.use(helmet.hsts({
 
 
 app.use(cors({
-  origin: 'http://localhost:5174',
+  origin: process.env.BASE_URL || 'http://localhost:5173',
   credentials: true,
 }));
 
@@ -59,14 +59,9 @@ scheduleLeaderboardUpdate();
 
 app.post('/generate-telegram-link', generateTelegramLink);
 
-// Telegram webhook handler
-// app.get('/setWebhook',handleWebHookSet);
+
 app.post('/webhook', handleTelegramWebhook);
 
-// app.post('/webhook', (req, res) => {
-//   console.log('Webhook payload received:', req.body);
-//   res.status(200).send('Webhook received');
-// });
 
 
 const startServer = async () => {

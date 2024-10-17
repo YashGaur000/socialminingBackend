@@ -40,7 +40,7 @@ const userSchema = new Schema({
      default: null
     
     },
-    referral: { type: Schema.Types.ObjectId, ref: 'User' },
+    referral: { type: Schema.Types.ObjectId, ref: 'Referral' },
 }, {
   timestamps: { 
     createdAt: 'created_at', 
@@ -149,17 +149,4 @@ export const findUserByUserIdAndWalletAddress = async (userId: string, walletAdd
 };
 
 
-export const findWalletAddress = async (
-  walletAddress:string) => {
-  console.log(walletAddress);
-  
-  try {
-    const users= await UserModel.findOne({ walletAddress }).exec();
-    console.log(users);
-    
-   return users;
-  } catch (error) {
-    console.error('Error finding user by userId:', error);
-    throw error;
-  }
-};
+

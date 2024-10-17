@@ -4,239 +4,218 @@ import { Request, Response } from 'express';
 import crypto from 'crypto';
 import dotenv from "dotenv"
 
-import { findUserByUserId, UserModel } from '../models/userModel';
-import SocialPlatform from '../models/SocialPlatformModel';
-
-
 import axios from 'axios';
 import { ISocialPlatform } from '../types/schema';
+import { findbyIdAndSocialPlatform } from '../utils/telegramQuery';
 
 dotenv.config();
 
 const BOT_TOKEN = process.env.BOT_TOKEN|| '';
 const BOT_INVITE = process.env.BOT_INVITE || '';
-const WEBHOOK_URL=process.env.WEBHOOK_URL ;
+
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 const GROUP_ID=process.env.BOT_GROUPID;
-// const linkingTokenMap: { [key: string]: string } = {};
-
-// console.log(linkingTokenMap);
-
-
-// export const generateTelegramLink = async (req: Request, res: Response) => {
- 
-
-//   try {
-    
-//     const { userId } = req.body;
-  
-     
-//     const existingUser = await findUserByUserId(userId as string);
-  
-//     if (!existingUser) {
-//        res.status(404).json({ error: 'User not found.' });
-//     }
-  
-   
-//     const telegramPlatform = existingUser.socialPlatforms.find(
-//       (platform) => platform.platform === 'telegram'
-//     );
-  
-//     if (telegramPlatform) {
-//       res.status(400).json({ error: 'User already has Telegram linked.' });
-//     }
-  
-    
-//     const linkingToken = crypto.randomBytes(20).toString('hex');
-  
-  
-//     linkingTokenMap[linkingToken] = userId;
-    
-//     // const telegramLink = `https://t.me/${BOT_INVITE}?start=${linkingToken}`;
-  
-//     const groupInviteLink = await createGroupInviteLink(linkingToken);
-  
-//     let telegram_link = groupInviteLink+`?start=${linkingToken}`
-//     res.status(201).json({ telegram_link });
-   
-//   }  catch (error) {
-   
-//     console.error('Error generating Telegram link:', error);
-//     res.status(500).json({ error: 'An error occurred while generating the Telegram link.' });
-//   }
- 
-// };
-
-
-// export const handleTelegramWebhook = async (req: Request, res: Response) => {
-
-//   const update = req.body;
-//   console.log('Received update:', JSON.stringify(update));
-
-
-//   try {
-//     if (update.message && update.message.new_chat_members) {
-//       for (const newMember of update.message.new_chat_members) {
-//         if (!newMember.is_bot) {
-//           await handleNewMember(update.message.chat.id, newMember);
-//         }
-//       }
-//     } else if (update.message && update.message.left_chat_member) {
-//       if (!update.message.left_chat_member.is_bot) {
-//         await handleLeftMember(update.message.chat.id, update.message.left_chat_member);
-//       }
-//     }
-
-//     res.sendStatus(200);
-//   } catch (error) {
-//     console.error('Error handling Telegram webhook:', error);
-//     res.sendStatus(500);
-//   }
- 
-
-   
-//   };
-  
- 
-
-
-//   async function handleNewMember(chatId: number, newMember: any) {
-//     console.log(`New member joined: ${newMember.first_name} ${newMember.last_name || ''} (ID: ${newMember.id})`);
-//     const welcomeMessage = `Welcome ${newMember.first_name} to the group!`;
-//     await sendTelegramMessage(chatId, welcomeMessage);
- 
-//   }
-  
-//   async function handleLeftMember(chatId: number, leftMember: any) {
-//     console.log(`Member left: ${leftMember.first_name} ${leftMember.last_name || ''} (ID: ${leftMember.id})`);
-    
-//   }
-
-
-  async function linkTelegramAccount(userId: string, telegramUser: any) {
-    const user = await findUserByUserId(userId);
-    if (user) {
-
-      const telegramDetails:ISocialPlatform = {
-        platform: 'telegram',
-        userIdentifier: telegramUser.id.toString(),
-        platformUserName: telegramUser.username,
-        pointsEarned:400,
-        joined:true,
-        
-        
-      };
-       user.socialPlatforms.push(telegramDetails );
-      await user.save();
-    } else {
-      throw new Error('User not found');
-    }
-  }
-
-//   async function createGroupInviteLink(linkingToken: string): Promise<string> {
-//     const url = `https://api.telegram.org/bot${BOT_TOKEN}/createChatInviteLink`;
-//     const body = JSON.stringify({
-//       chat_id: process.env.BOT_GROUPID,
-//       name: `Join request for ${linkingToken}`,
-//       creates_join_request: true
-//     });
-  
-//     try {
-//       const response = await fetch(url, {
-//         method: 'POST',
-//         headers: { 'Content-Type': 'application/json' },
-//         body: body,
-//       });
-//       const data = await response.json();
-//       console.log(data);
-      
-//       return data.result.invite_link;
-//     } catch (error) {
-//       console.error('Error creating group invite link:', error);
-//       throw error;
-//     }
-//   }
 
 
 
-//   async function sendTelegramMessage(chatId: number, text: string) {
-//     const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-//     const body = JSON.stringify({
-//       chat_id: chatId,
-//       text: text,
-//     });
-  
-//     try {
-//       await fetch(url, {
-//         method: 'POST',
-//         headers: { 'Content-Type': 'application/json' },
-//         body: body,
-//       });
-//     } catch (error) {
-//       console.error('Error sending Telegram message:', error);
-//     }
-//   }
+const tokenToUserIdMap: { [token: string]: number } = {};
 
+const generateToken = (): string => {
+  return crypto.randomBytes(16).toString('hex');
+};
 
-const userLinks = new Map();
-console.log("maping",userLinks);
+const saveTokenMapping = (token: string, userId: number) => {
+  tokenToUserIdMap[token] = userId;
+  console.log(`Saved mapping: Token ${token} => User ${userId}`);
+};
 
-export const generateTelegramLink=async (req:Request, res:Response) => {
-  const { userId } = req.body;
-  const uniqueCode = crypto.randomBytes(6).toString('hex');
-  console.log(userId,uniqueCode);
-  
-  try {
-    const response = await axios.post(`${TELEGRAM_API}/createChatInviteLink`, {
-      chat_id: GROUP_ID,
-      expire_date: Math.floor(Date.now() / 1000) + 1000000000,
-      name: uniqueCode
-    });
-    
-    const inviteLink = response.data.result.invite_link;
-    console.log(inviteLink);
-    
-    userLinks.set(uniqueCode, userId);
-    
-    
-    res.json({ inviteLink });
-  } catch (error) {
-    console.error('Error generating Telegram invite link:', error);
-    res.status(500).json({ error: 'Failed to generate invite link' });
+const getUserIdByToken = (token: string): number | null => {
+  return tokenToUserIdMap[token] || null;
+};
+
+const deleteTokenMapping = (token: string) => {
+  if (token in tokenToUserIdMap) {
+    delete tokenToUserIdMap[token];
+    console.log(`Deleted mapping for token: ${token}`);
   }
 };
+
+
+
+export const generateTelegramLink=async (req:Request, res:Response) => {
+
+  const {userId}=req.body;
+  const botUsername ="socialmining13_bot" ; 
+  const token = generateToken();
+
+ 
+
+  saveTokenMapping(token, userId);
+
+  
+  const inviteLink = `https://t.me/${botUsername}?start=${token}`;
+  console.log('Generated Invite Link:', inviteLink);
+
+  res.json({
+    inviteLink: inviteLink
+   
+  });
+}
+
 
 export const handleTelegramWebhook= async (req:Request, res:Response) => {
   const { message } = req.body;
   console.log("message",message);
   
-  if (message.new_chat_member) {
-    const uniqueCode = message.invite_link ? message.invite_link.name : null;
-    const userId = uniqueCode ? userLinks.get(uniqueCode) : null;
-    console.log(userId ,uniqueCode);
-    
-    const telegramUser={
-      id:message.new_chat_member.id,
-      username:""
+  if (message && message.text) {
+    if (message.text.startsWith('/start')) {
+      await handleStartComand(message);
+    } else {
+      // Check group membership for any other message
+      console.log("check");
+      
+      await checkAndHandleGroupMembership(message);
     }
-          
-    // if (userId) {
-    //   const telegramId = message.new_chat_member.id;
-    //   await linkUserWithTelegram(userId, telegramId);
-    //   await updateUserStatus(userId, 'joined');
-    //   userLinks.delete(uniqueCode); // Remove used link
-    // }
-  } else if (message.left_chat_member) {
-    // const telegramId = message.left_chat_member.id;
-    // const userId = await getUserIdFromTelegramId(telegramId);
-    
-    // if (userId) {
-    //   await updateUserStatus(userId, 'left');
-    // }
   }
-  
   res.sendStatus(200);
+}
+
+const handleStartComand=async(message)=>{
+
+
+  const startToken = message.text.split(' ')[1];
+
+  // if (!startToken) {
+  //   await sendMessage(message.chat.id, "Please use the invite link to start the bot.");
+  //  res.sendStatus(200);
+  // }
+
+ 
+    // const userId = getUserIdByToken(startToken);
+   
+    const userId="123"
+    
+    if (userId !== null) {
+      deleteTokenMapping(startToken);
+      const groupLink = "https://t.me/socialtenex1367";
+
+      const welcomeMessage = `Welcome, ${message.chat.username}! 🎉 Your ID has been verified successfully.
+
+      Here's what you need to do next:
+      
+      1. Join our official group by clicking this link: ${groupLink}
+      2. After joining the group, Complete the taskList.
+      
+      Happy mining! 💎`;
+      
+          await sendMessage(message.chat.id, welcomeMessage);
+     
+      const telegramPlatform:ISocialPlatform={
+        platform: 'telegram',
+          userIdentifier: message.chat.id.toString(),
+          platformUserName: message.chat.username || "",
+          joined: false,
+          joinDate: new Date(),
+          pointsEarned: 0
+      }
+       try {
+        
+        await  findbyIdAndSocialPlatform(userId,telegramPlatform);
+        
+       } catch (error) {
+           console.log(error);
+           
+       } 
+            
+    } else {
+      await sendMessage(message.chat.id, "Invalid or expired token. Please generate a new invite link.");
+
+    }
+    
+  } 
+
+
+
+
+const sendMessage = async (chatId: number, text: string) => {
+  const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+  try {
+    await axios.post(url, {
+      chat_id: chatId,
+      text: text,
+    });
+  } catch (error) {
+    console.error('Error sending message:', error);
+  }
 };
 
 
+const checkAndHandleGroupMembership = async (message: any) => {
+  const chatId = message.chat.id;
+  const userId = message.from.id;
 
+  const isGroupMember = await checkGroupMembership(userId);
+  // const user = await findUserById(userId);
+  const user="1234"
+  if (isGroupMember && user) {
+    await handleJoinGroupCommand(message);
+  } else {
+    const groupLink = "https://t.me/socialtenex1367";
+    const notJoinedMessage = `It seems you haven't joined our group or registered on our website yet. 
+
+To earn points and participate in our social mining activities:
+
+1. Join our official group: ${groupLink}
+2. Visit our website to complete registration: ${`https://social.tenex.finance/`}
+
+Once you've done both, come back here and send any message to verify your status.`;
+
+    await sendMessage(chatId, notJoinedMessage);
+  }
+};
+
+const handleJoinGroupCommand = async (message: any) => {
+  const chatId = message.chat.id;
+  const userId = message.from.id;
+
+  const successMessage = `Congratulations! 🎊 You've successfully joined our group and verified your account.
+
+Your participation has been recorded, and you're now an official member of our social mining community. Here's what you can expect:
+
+• Earn points by completing tasks and engaging with our community
+• Climb the leaderboard and compete with other miners
+• Gain access to exclusive rewards and opportunities
+
+Stay active, complete tasks, and watch your mining success grow! If you have any questions, feel free to ask in the group.
+
+Happy mining! 💎`;
+
+  await sendMessage(chatId, successMessage);
+
+  try {
+    // await updateUserJoinStatus(userId, true);
+  } catch (error) {
+    console.log(error);
+    await sendMessage(chatId, "An error occurred while updating your information. Please try again later.");
+  }
+};
+
+
+const checkGroupMembership = async (userId: number): Promise<boolean> => {
+  
+  
+  const url = `${TELEGRAM_API}/getChatMember`;
+  try {
+    const response = await axios.post(url, {
+      chat_id: GROUP_ID,
+      user_id: userId,
+    });
+    const status = response.data.result.status;
+    console.log(status);
+    
+    return ['creator', 'administrator', 'member'].includes(status);
+  } catch (error) {
+    console.error('Error checking group membership:', error);
+    return false;
+  }
+};

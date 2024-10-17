@@ -12,6 +12,7 @@ const referralSchema = new Schema<IReferral>({
  
 });
 
+
 const Referral = model<IReferral>('Referral', referralSchema);
 export default Referral;
 
