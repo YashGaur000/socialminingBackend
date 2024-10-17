@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { findUserByUserId, findWalletAddress, UserModel } from '../models/userModel';
+import { findUserByUserId, UserModel } from '../models/userModel';
 import { randomBytes } from 'crypto';
 import dotenv from 'dotenv';
 import { generateCodeChallenge, generateCodeVerifier, generateRandomState } from '../utils/OuthVerifier';
@@ -9,6 +9,7 @@ import querystring from 'querystring';
 import { isAddress, Wallet} from 'ethers';
 import axios from 'axios';
 import { checkReferrer, createReferralForUser } from './referralController';
+import { Types } from 'mongoose';
 
 
 
@@ -108,62 +109,130 @@ export const logout = (req: Request, res: Response): void => {
 export const ConnectWalletController = async(req: Request, res: Response) => {
 
   let userId: string;
-  let referralLink: string;
+  let referralcode:string;
 
   try {
-    const { address, referralCode,userid } = req.body;
+    const { address, referralCode,avaibleUserId } = req.body;
      
-   
-    
     const isValid = isAddress(address);
-          
-    
 
+          
     if (!isValid) {
-       res.status(400).json({ message: 'Invalid wallet address' });
+      return res.status(400).json({ message: 'Invalid wallet address' });
     }
 
     const Address:string=address;
-   
-      const user = await findWalletAddress(Address);;
-  
-   
-    if (!user) {
-     const newuser = new UserModel({
-        userId: `${Date.now()}`,
-        userName: `Guest${Date.now()}`, 
-        userType: 'wallet', 
-      
-        walletAddress: address,
-      });
-      await newuser.save();
+    let referredBy: Types.ObjectId | null = null;
 
-      if(referralCode){
-        const referral = await checkReferrer(referralCode, newuser.userId)
-        console.log("referral here",referral);
+    
+
+    let user = await UserModel.findOne({ 
+      $or: [
+        { userId: avaibleUserId }, 
+        { walletAddress: Address }
+      ] 
+    });
+
+
+    
+      
+      if(user)
+      {
+
+        if (avaibleUserId && !user.walletAddress) {
+          
+          user.walletAddress = Address;
+          await user.save();
+          console.log(`Wallet address updated for Twitter user: ${avaibleUserId}`);
+        }
+        else if(avaibleUserId && (user.walletAddress!==Address))
+        {
+           return  res.status(404).json({"message":"Invalid Wallet Address"});
+        }
+        else if(avaibleUserId && user.walletAddress===Address)
+        {
+          return res.status(201).json({"message":"sucessfully connected","User":user});
+        }
+        else if(user.walletAddress===Address )
+        {
+          return res.status(404).json({"message":"Wallet Address Already exist"});
+        }
+        userId = user.userId;
+        console.log('User found:', user);
+      }
+      else
+      {
+
+        const existingUserWithWallet = await UserModel.findOne({ walletAddress: Address });
+  
+        if (existingUserWithWallet) {
+          return res.status(404).json({ "message": "Wallet Address is already in use by another user." });
+        }
+        const newUser = new UserModel({
+          userId: `${Date.now()}`,  
+          userName: `Guest${Date.now()}`, 
+          userType: 'wallet',
+          walletAddress: Address,
+          referredBy: referredBy
+        });
+
+        if (referralCode) {
+          try {
+            const referral = await checkReferrer(referralCode, newUser.userId);
+            if (referral) {
+              
+              referredBy = referral._id as Types.ObjectId ;
+              newUser.referredBy = referredBy;
+            }
+            console.log("Referral success:", referral);
+          } catch (error) {
+            console.error('Error in referral process:', error);
+            return res.status(400).json({ message: 'Referral process failed' });
+          }
+        }
+  
+        const savedUser=await newUser.save();
+        userId = newUser.userId;
+       
+        console.log('New user created:', newUser);
+
+        const referralResponse = await createReferralForUser(userId);
+      referralcode = referralResponse.referralCode
+
+      return res.status(200).json({
+        message: 'Wallet connected successfully',
+        user:savedUser,
+        referralcode,
+      });
+      } 
+
+      return res.status(200).json({
+        message: 'Wallet connected successfully',
+        user
+        
+      });
+
+
+      }
+      catch (error) {
+        console.error('Internal error:', error);
+        return  res.status(500).json({ message: 'Internal server error' });
       }
 
-      console.log('New user created:', newuser);
-      userId = newuser.userId;
-    } else {
-      console.log('User already exists:', user);
-      userId = user.userId;
-    }
+    } 
 
-
-    const referralResponse = await createReferralForUser(userId);
-    console.log("referral Response",referralResponse);
-    referralLink = referralResponse.referralLink;
-
-    res.status(200).json({ message: 'Wallet connected successfully',
-      userId,
-      referralLink,
-     });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-};
+      
+       
+        
+       
+       
+     
+      
+  
+    
+     
+      
+  
 interface DiscordTokenResponse {
     access_token: string;
     token_type: string;
