@@ -19,7 +19,10 @@ router.get('/callback', (req: Request, res: Response) => {
   handleCallback(req, res);
 });
 
-router.post('/connectwallet',ConnectWalletController);
+router.post('/connectwallet',(req:Request,res:Response)=>{
+  ConnectWalletController(req,res);
+});
+
 router.get('/logout',logout);
 
 // Protected route for user details
@@ -34,7 +37,7 @@ router.get('/user-details', (req: Request, res: Response, next: NextFunction) =>
 router.post('/connect-discord', createDiscordUserSignIn);
 
 
-router.post('/referral', authMiddleware, generateReferralCode);
+router.post('/referral', generateReferralCode);
 
 
 

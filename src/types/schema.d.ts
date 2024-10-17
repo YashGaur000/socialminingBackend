@@ -8,7 +8,7 @@ export interface ISocialPlatform {
   joined: boolean;
   joinDate?: Date;
   pointsEarned: number;
-  invite?: string;
+ 
 }
 
 
