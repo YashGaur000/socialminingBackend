@@ -73,7 +73,8 @@ export const checkReferrer = async(referralCode: string,userId: string) => {
     } else {
       console.log(`User ${userId} has already been referred.`);
 
-      return null;
+      // console.log(" userid of referrrer", newUserId)
+      // console.log(" referred user data added to referral", newUserId)
     }
   } 
 

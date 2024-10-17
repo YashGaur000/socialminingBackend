@@ -348,30 +348,3 @@ interface DiscordTokenResponse {
       res.status(500).json({ error: 'Failed to create Discord user' });
     }
   };
-  
-  export const generateReferralCode = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { discordIdAndUsername }: { discordIdAndUsername: { id: string; username: string } } = req.body;
-      console.log(discordIdAndUsername);
-  
-            const generateReferralCode = (): string => {
-            //return randomBytes(3).toString('hex');
-            return randomBytes(Math.ceil(length / 2))
-            .toString('hex')
-            .slice(0, length);
-            };
-  
-      const referralCode: string = generateReferralCode();
-      console.log('===referralcode===', referralCode);
-  
-      const discordUser = await findUserByUserId(discordIdAndUsername.id.toString()
-      );
-      console.log('discord email--->', discordUser);
-  
-      res.status(200).json({ referralCode, discordUser });
-    } catch (error) {
-      console.error('Error generating referral code:', error);
-      res.status(500).json({ error: 'Failed to generate referral code' });
-    }
-  
-  };
