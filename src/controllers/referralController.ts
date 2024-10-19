@@ -53,8 +53,11 @@ export const createReferralForUser = async (userId: string) => {
 
 export const checkReferrer = async(referralCode: string,userId: string) => {
   try{
-    const referral = await Referral.findOne({referralCode: referralCode}).populate('userId');
-
+    console.log("refferalcode",referralCode,"usERID",userId);
+    
+    const referral = await Referral.findOne({referralCode: referralCode});
+   console.log("referral" ,referral);
+   
 
     if (!referral) {
       

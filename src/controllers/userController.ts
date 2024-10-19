@@ -50,10 +50,12 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
     const authorizationUrl = `${AUTHORIZATION_URL}?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=tweet.read%20tweet.write%20users.read&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
 
     //  res.redirect(authorizationUrl);
-   res.json({ authorizationUrl });
+     res.json({ authorizationUrl });
+     return;
   } catch (error) {
     console.error('Error generating authorization URL:', error);
     res.status(500).json({ error: 'Failed to generate Twitter login URL' });
+    return;
   }
 };
 
@@ -102,6 +104,7 @@ export const logout = (req: Request, res: Response): void => {
 
       
         res.status(200).json({ message: 'Logout successful' });
+        return;
     });
 };
 
@@ -131,9 +134,10 @@ export const ConnectWalletController = async(req: Request, res: Response) => {
         { userId: avaibleUserId }, 
         { walletAddress: Address }
       ] 
-    });
+    }).populate('referral');
 
 
+    console.log("users",user);
     
       
       if(user)
@@ -155,7 +159,9 @@ export const ConnectWalletController = async(req: Request, res: Response) => {
         }
         else if(user.walletAddress===Address )
         {
-          return res.status(404).json({"message":"Wallet Address Already exist"});
+          
+          
+          return res.status(201).json({"message":"sucessfully connected","User":user});
         }
         userId = user.userId;
         console.log('User found:', user);
@@ -163,11 +169,7 @@ export const ConnectWalletController = async(req: Request, res: Response) => {
       else
       {
 
-        const existingUserWithWallet = await UserModel.findOne({ walletAddress: Address });
-  
-        if (existingUserWithWallet) {
-          return res.status(404).json({ "message": "Wallet Address is already in use by another user." });
-        }
+        
         const newUser = new UserModel({
           userId: `${Date.now()}`,  
           userName: `Guest${Date.now()}`, 
@@ -176,6 +178,7 @@ export const ConnectWalletController = async(req: Request, res: Response) => {
           referredBy: referredBy
         });
 
+        
         if (referralCode) {
           try {
             const referral = await checkReferrer(referralCode, newUser.userId);
@@ -208,8 +211,8 @@ export const ConnectWalletController = async(req: Request, res: Response) => {
 
       return res.status(200).json({
         message: 'Wallet connected successfully',
-        user
-        
+        user,
+        referralcode
       });
 
 
