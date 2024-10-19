@@ -94,7 +94,11 @@ const handleCallback = async (req: Request, res: Response): Promise<void> => {
              
           
           
-            await findOrCreateSocialPlatform("twitter",userId,userName)
+        //    const existingtwitter= await findOrCreateSocialPlatform("twitter",userId,userName)
+        //    if(existingtwitter)
+        //    {
+             
+        //    }
             const existingUser = await findUserByUserIdAndWalletAddress(userId, Address as string,userName );
            
          console.log(existingUser);
@@ -104,7 +108,8 @@ const handleCallback = async (req: Request, res: Response): Promise<void> => {
             
          
         } catch (error) {
-            res.status(500).json({ error: 'Server error' });
+            // res.status(500).json({ error: 'Server error' });
+            res.redirect('http://localhost:5173/?status=failure');
             return;
         }
 
@@ -120,17 +125,23 @@ const handleCallback = async (req: Request, res: Response): Promise<void> => {
                 maxAge: 3600000, 
                 sameSite: 'strict', 
             });
-            res.redirect('http://localhost:5173/success?status=success');
+            res.redirect('http://localhost:5173?status=success');
+            return;
         } else {
-            res.redirect('http://localhost:5173/failure');
+            res.redirect('http://localhost:5173?status=failure');
+            return;
         }
     } catch (error) {
         if (error instanceof Error) {
             console.error('Error during token exchange or fetching user details:', error.message);
-            res.status(500).send('Failed to exchange authorization code or fetch user details');
+            res.redirect('http://localhost:5173?status=failure');
+            // res.status(500).send('Failed to exchange authorization code or fetch user details');
+            return;
         } else {
             console.error('Unknown error:', error);
-            res.status(500).send('Unknown error occurred');
+            res.redirect('http://localhost:5173/?status=failure');
+            // res.status(500).send('Unknown error occurred');
+            return;
         }
     }
 };

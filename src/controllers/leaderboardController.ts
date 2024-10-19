@@ -1,34 +1,53 @@
 import { Request, Response } from 'express';
 import { UserModel } from '../models/userModel';
 import { LeaderboardModel } from '../models/LeaderBoardModel';
-
-
-
-
-
-
+import Referral from '../models/ReferralModel';
 
 export const updateLeaderboard = async () => {
   try {
     const users = await UserModel.aggregate([
+      {
+        $lookup: {
+          from: 'referrals',
+          localField: 'userId',
+          foreignField: 'userId',
+          as: 'referralData'
+        }
+      },
+      {
+        $lookup: {
+          from: 'socialplatforms', 
+          localField: 'socialPlatforms',
+          foreignField: '_id',
+          as: 'platformData'
+        }
+      },
       {
         $project: {
           userId: '$_id',
           userName: '$userName',
           points: {
             $add: [
-              '$points',
-              { $sum: '$socialPlatforms.pointsEarned' },
-              { $multiply: ['$totalTasksCompleted', 10] }
+              
+              {
+                $ifNull: [{ $sum: '$platformData.pointsEarned' }, 0]
+              },
+              { $multiply: ['$totalTasksCompleted', 10] },
+              {
+                $ifNull: [
+                  { $sum: '$referralData.totalPointsEarned' },
+                  0
+                ]
+              }
             ]
           }
         }
       },
       { $sort: { points: -1 } }
     ]);
-
     
-    const SortedData = users.map((user, index) => ({
+
+    const sortedData = users.map((user, index) => ({
       updateOne: {
         filter: { userId: user.userId },
         update: {
@@ -42,11 +61,12 @@ export const updateLeaderboard = async () => {
       }
     }));
 
-    await LeaderboardModel.bulkWrite(SortedData);
+    await LeaderboardModel.bulkWrite(sortedData);
+    
 
     const userUpdates = users.map(user => ({
       updateOne: {
-        filter: { userId: user.userId },
+        filter: { _id: user.userId },
         update: { $set: { points: user.points } }
       }
     }));
@@ -58,6 +78,7 @@ export const updateLeaderboard = async () => {
     console.error('Error updating leaderboard:', error);
   }
 };
+
 
 export const getLeaderboardController = async (req: Request, res: Response) => {
   try {
