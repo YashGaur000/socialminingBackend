@@ -4,6 +4,8 @@ import { ConnectWalletController,createDiscordUserSignIn, createUser, generateRe
 
 import { handleCallback } from '../controllers/OuthtwitterController';
 import authMiddleware from '../middlewares/authMiddleware';
+import { handletelegramconnect } from '../controllers/telegramController';
+import { getReferedData } from '../controllers/referralController';
 
 
 
@@ -35,11 +37,16 @@ router.get('/user-details', (req: Request, res: Response, next: NextFunction) =>
 
 
 router.post('/connect-discord', createDiscordUserSignIn);
-
+router.post('/connect/telegram',(req: Request, res: Response) => {
+  handletelegramconnect(req, res);
+})
 
 router.post('/referral', generateReferralCode);
 
 
+router.post('/getrefered',(req:Request,res:Response)=>{
+  getReferedData
+});
 
 
 

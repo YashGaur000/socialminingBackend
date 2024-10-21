@@ -119,7 +119,8 @@ export const ConnectWalletController = async(req: Request, res: Response) => {
      
     const isValid = isAddress(address);
 
-          
+     console.log("userId",avaibleUserId);
+     
     if (!isValid) {
       return res.status(400).json({ message: 'Invalid wallet address' });
     }
@@ -159,7 +160,6 @@ export const ConnectWalletController = async(req: Request, res: Response) => {
         }
         else if(user.walletAddress===Address )
         {
-          
           
           return res.status(201).json({"message":"sucessfully connected","User":user});
         }
