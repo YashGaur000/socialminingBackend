@@ -3,6 +3,7 @@ import { v4 } from 'uuid';
 import { ConnectWalletController } from "./userController";
 import { UserModel } from "../models/userModel";
 import { Types } from "mongoose";
+import { Request, Response } from "express";
 
 export const createReferralForUser = async (userId: string) => {
   try {
@@ -88,4 +89,30 @@ export const checkReferrer = async(referralCode: string,userId: string) => {
   }
     
  
+}
+
+
+export const getReferedData=async(req:Request,res:Response)=>{
+ 
+  try {
+    const { userId } = req.body;  
+
+   
+    if (!userId) {
+      return res.status(400).json({ message: 'userId is required' });
+    }
+
+   
+    const referral = await Referral.findOne({ userId }).populate('referredUsers', 'name email'); 
+
+    if (!referral) {
+      return res.status(404).json({ message: 'Referral data not found' });
+    }
+
+  
+    return res.status(200).json({ referredUsers: referral.referredUsers });
+  } catch (error) {
+    console.error('Error fetching referred users:', error);
+    return res.status(500).json({ message: 'Server Error' });
+  }
 }

@@ -66,7 +66,7 @@ const handleCallback = async (req: Request, res: Response): Promise<void> => {
         code_verifier: codeVerifier,
         client_id: CLIENT_ID,
     });
-
+  
     try {
         const tokenResponse : {
             data: { access_token: string; };
@@ -85,10 +85,15 @@ const handleCallback = async (req: Request, res: Response): Promise<void> => {
          console.log(userResponse.data.data);
     
           console.log(req.cookies);
-
+          let userId=""
+          if(!Address)
+          {
+             userId =Date.now().toString();
+          }
+          
         try {
             
-            const userId:string = Date.now().toString();
+            
             const userName:string=username;
                 
              
@@ -102,8 +107,8 @@ const handleCallback = async (req: Request, res: Response): Promise<void> => {
             const existingUser = await findUserByUserIdAndWalletAddress(userId, Address as string,userName );
            
          console.log(existingUser);
-
-         
+          if(existingUser)
+             userId=existingUser.userId;
          success=true;
             
          
@@ -115,7 +120,7 @@ const handleCallback = async (req: Request, res: Response): Promise<void> => {
 
         if (success) {
             
-            const jwtToken = jwt.sign({ userId: id, userName: username }, JWT_SECRET, {
+            const jwtToken = jwt.sign({ userId: userId, userName: username }, JWT_SECRET, {
                 expiresIn: '1h',
             });
 
@@ -125,7 +130,7 @@ const handleCallback = async (req: Request, res: Response): Promise<void> => {
                 maxAge: 3600000, 
                 sameSite: 'strict', 
             });
-            res.redirect('http://localhost:5173?status=success');
+            res.redirect(`http://localhost:5173?status=success&token=${jwtToken}`);
             return;
         } else {
             res.redirect('http://localhost:5173?status=failure');
