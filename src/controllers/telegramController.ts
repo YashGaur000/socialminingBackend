@@ -1,7 +1,7 @@
 
 
 import { Request, Response } from 'express';
-import crypto from 'crypto';
+import crypto, { createHash, createHmac } from 'crypto';
 import dotenv from "dotenv"
 
 import axios from 'axios';
@@ -219,3 +219,43 @@ const checkGroupMembership = async (userId: number): Promise<boolean> => {
     return false;
   }
 };
+
+
+export const handletelegramconnect=async (req:Request, res:Response) => {
+  
+    const isValid = verifyTelegramAuth(req.query);
+  
+    if (!isValid) {
+      return res.status(403).send('Invalid Telegram authentication.');
+    }
+  
+    
+    const { id, username, first_name, last_name } = req.query;
+
+   return  res.send({
+      success: true,
+      
+      user: { id, username, first_name, last_name },
+    });
+  }
+
+  function verifyTelegramAuth(query) {
+    const { hash, ...data } = query;
+  
+    const secretKey = crypto
+      .createHash('sha256')
+      .update(BOT_TOKEN)
+      .digest();
+  
+    const checkString = Object.keys(data)
+      .sort()
+      .map(key => `${key}=${data[key]}`)
+      .join('\n');
+  
+    const hmac = crypto
+      .createHmac('sha256', secretKey)
+      .update(checkString)
+      .digest('hex');
+  
+    return hmac === hash;
+  }
