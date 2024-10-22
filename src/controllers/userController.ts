@@ -136,7 +136,9 @@ export const ConnectWalletController = async(req: Request, res: Response) => {
         { walletAddress: Address }
       ] 
     }).populate('referral');
-
+ // if (res.User) {
+          //   navigate('/dashboard');
+          // }
 
     console.log("users",user);
     
@@ -282,6 +284,9 @@ interface DiscordTokenResponse {
   
     try {
       // Fetch token data from Discord
+
+      console.log("heyyyyyyyyy");
+      
       const tokenResponse = await axios('https://discord.com/api/oauth2/token', {
         method: 'POST',
         data: new URLSearchParams({
@@ -289,22 +294,23 @@ interface DiscordTokenResponse {
           client_secret: process.env.CLIENT_SECRET_DISCORD as string,
           code,
           grant_type: 'authorization_code',
-          redirect_uri: `http://localhost:${process.env.FRONTEND_PORT}`,
+          redirect_uri: `http://localhost:${process.env.FRONTEND_PORT}/dashboard`,
           scope: 'identify',
         }).toString(),
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       });
-      console.log("heres tokenresponse",tokenResponse);
 
+      console.log("heres tokenresponse",tokenResponse);
+      
       const { status, data } = tokenResponse;
   
       if ( status !== 200 ) {
         throw new Error(`Failed to fetch token: ${tokenResponse.statusText}`);
       }
       
-      const oauthData =await data.json() as DiscordTokenResponse ;
+      const oauthData =await data as DiscordTokenResponse ;
       console.log('---------------oauthData------------------', oauthData);
       
   
@@ -320,20 +326,20 @@ interface DiscordTokenResponse {
         throw new Error(`Failed to fetch user data: ${tokenResponse.statusText}`);
       }
   
-      const userResultData = await userResponse.data.json() as DiscordUserResponse;
+      // const userResultData =  userResponse.data as DiscordUserResponse;
 
-      console.log('--------------userResultData---------------------', userResultData);
+      // console.log('--------------userResultData---------------------', userResultData);
   
       // Prepare Discord user data for storage
-      const DiscordUserData: DiscordUserData = {
-        ...userResultData,
-        accessToken: oauthData.access_token,
-        refreshToken: oauthData.refresh_token,
-        tokenType: oauthData.token_type,
-        expiresIn: oauthData.expires_in,
-        scope: oauthData.scope,
-      };
-      console.log('discorduserdata *-******', DiscordUserData);
+      // const DiscordUserData: DiscordUserData = {
+      //   ...userResultData,
+      //   accessToken: oauthData.access_token,
+      //   refreshToken: oauthData.refresh_token,
+      //   tokenType: oauthData.token_type,
+      //   expiresIn: oauthData.expires_in,
+      //   scope: oauthData.scope,
+      // };
+      // console.log('discorduserdata *-******', DiscordUserData);
   
       // Save user data to the database
       //const result = await createDiscordUser(DiscordUserData);
@@ -341,10 +347,10 @@ interface DiscordTokenResponse {
   
       res.status(201).json({
         message: 'User created successfully',
-        data: {
-          id: userResultData.id,
-          username: userResultData.username,
-        },
+        // data: {
+        //   id: userResultData.id,
+        //   username: userResultData.username,
+        // },
       });
     } catch (error) {
       console.error('Error creating Discord user:', error);

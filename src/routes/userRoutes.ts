@@ -6,6 +6,7 @@ import { handleCallback } from '../controllers/OuthtwitterController';
 import authMiddleware from '../middlewares/authMiddleware';
 import { handletelegramconnect } from '../controllers/telegramController';
 import { getReferedData } from '../controllers/referralController';
+import { createRedditUserSignIn } from '../controllers/redditController';
 
 
 
@@ -40,6 +41,8 @@ router.post('/connect-discord', createDiscordUserSignIn);
 router.post('/connect/telegram',(req: Request, res: Response) => {
   handletelegramconnect(req, res);
 })
+router.post('/connect-reddit', createRedditUserSignIn);
+
 
 // router.post('/referral', authMiddleware, generateReferralCode);
 

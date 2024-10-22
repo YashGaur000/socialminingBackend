@@ -33,7 +33,7 @@ app.use(helmet.hsts({
 
 
 app.use(cors({
-  origin: process.env.BASE_URL || 'http://localhost:5173',
+  origin: process.env.BASE_URL,
   credentials: true,
 }));
 
